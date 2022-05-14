@@ -12,7 +12,7 @@
 #include <audio/microphone.h>
 #include <msgbus/messagebus.h>
 #include <sensors/proximity.h>
-
+#include <audio/play_melody.h>
 #include <audio/microphone.h>
 #include <audio/audio_thread.h>
 
@@ -54,6 +54,86 @@ static void serial_start(void)
 }
 
 
+void left_step(void){
+
+		left_motor_set_pos(0);
+		while (abs(left_motor_get_pos())<200){
+			left_motor_set_speed(200);
+			right_motor_set_speed(500);
+		}
+		left_motor_set_pos(0);
+		while (abs(left_motor_get_pos())<500){
+			left_motor_set_speed(500);
+			right_motor_set_speed(200);
+		}
+		left_motor_set_pos(0);
+		left_motor_set_speed(500);
+		right_motor_set_speed(500);
+	}
+
+void turn (void){
+	if (get_rescue()==1){
+		set_body_led(1);
+		left_motor_set_speed(-500);
+		right_motor_set_speed(500);
+	}
+}
+
+
+void victim_found(void){
+	if (get_rescue()==1){
+		set_front_led(0);
+		turn();
+		playMelody(IMPOSSIBLE_MISSION, ML_SIMPLE_PLAY, NULL);
+		int j=0;
+		while(j<7) {
+			set_led(LED1, 1);
+			chThdSleepMilliseconds(300);
+			set_led(LED3, 1);
+			chThdSleepMilliseconds(300);
+			set_led(LED5, 1);
+			chThdSleepMilliseconds(300);
+			set_led(LED7, 1);
+			chThdSleepMilliseconds(300);
+			set_led(LED1, 0);
+			chThdSleepMilliseconds(300);
+			set_led(LED3, 0);
+			chThdSleepMilliseconds(300);
+			set_led(LED5, 0);
+			chThdSleepMilliseconds(300);
+			set_led(LED7, 0);
+			++j;
+		}
+		set_body_led(0);
+		set_front_led(1);
+		left_motor_set_speed(0);
+		right_motor_set_speed(0);
+	}
+}
+
+void right_step(void){
+
+		right_motor_set_pos(0);
+		while (abs(right_motor_get_pos())<200){
+			left_motor_set_speed(500);
+			right_motor_set_speed(200);
+		}
+		right_motor_set_pos(0);
+		while (abs(right_motor_get_pos())<500){
+			left_motor_set_speed(200);
+			right_motor_set_speed(500);
+		}
+		right_motor_set_pos(0);
+		left_motor_set_speed(500);
+		right_motor_set_speed(500);
+	}
+
+
+void straight_track(void){
+	left_motor_set_speed(500);
+	right_motor_set_speed(500);
+}
+
 static void timer12_start(void){
     //General Purpose Timer configuration   
     //timer 12 is a 16 bit timer so we can measure time
@@ -93,28 +173,15 @@ int main(void)
 
     //starts proximity
 	proximity_start();
+	//digital analogic converter
+	dac_start();
+
+	playMelodyStart();
 	//get_ambient_light();
 	//calibrate_ir();
-   /*
-    //digital analogic converter
-	dac_start();
-	//start thread
-	playMelodyStart();
-    */
-/*
-   // int distance;
-   // distance = get_prox(3);
-    printf("test   ");
-    //printf("capteur = %d", distance);
-    printf("   ok     ");
-*/
-   // set_front_led(1);
-  //  set_body_led(1);
- //   set_led(LED3, 1);
-   // left_motor_set_speed(-400);
-   // right_motor_set_speed(400);
-   // chThdSleepMilliseconds(100);
-   // clear_leds();
+
+
+
 
 
 
@@ -137,124 +204,40 @@ int main(void)
 
     /* Infinite loop. */
     while (1) {
-
 	if (get_rescue()==1){
 		set_front_led(1);
+		chThdSleepMilliseconds(7000);
+		/*
+	if(get_calibrated_prox(IR3)>70){set_led(LED3,1);}
+	if(get_calibrated_prox(IR6)>110){set_led(LED7,1);}
+	 if((get_calibrated_prox(IR8)<110 || get_calibrated_prox(IR1)<110) &&
+		get_calibrated_prox(IR6)>70 && get_calibrated_prox(IR3)>70) {
+		 set_body_led(1);
 
-    	//victim_found();
-    	//detection();
-    	//turn();
-
-/*
-
-    	if (get_calibrated_prox(IR3)>110){
-    		set_led(LED3,1);
-    	}
-    	if (get_calibrated_prox(IR6)>150){
-			set_led(LED7,1);
-		}
-
-*/
-    	//detection();
-    	//triangulation();
-    	//turn_angle();
-/*
-    	if((get_calibrated_prox(IR8)>200 || get_calibrated_prox(IR1)>200) &&
-    		get_calibrated_prox(IR3)>110 && get_calibrated_prox(IR6)<110) {
-    			set_led(LED7, 1);
-				right_motor_set_pos(0);
-				while (abs(right_motor_get_pos())<325){
-					left_motor_set_speed(-500);
-					right_motor_set_speed(500);
-				}
-				right_motor_set_pos(0);
-				while (get_calibrated_prox(IR3)>110){
-					left_motor_set_speed(500);
-					right_motor_set_speed(500);
-				}
-				right_motor_set_pos(0);
-				while (abs(right_motor_get_pos())<150){
-					left_motor_set_speed(500);
-					right_motor_set_speed(500);
-				}
-				right_motor_set_pos(0);
-				set_front_led(0);
-				set_body_led(1);
-				set_front_led(1);
-    	} else {
-    		left_motor_set_speed(500);
-    		right_motor_set_speed(500);
-    	}
-*/
-    	/*
-    	if(get_rescue()==1){
-    		set_body_led(1);
-    		set_front_led(0);
-
-    		right_motor_set_pos(0);
-			while (abs(right_motor_get_pos())<1000){
-				left_motor_set_speed(500);
-				right_motor_set_speed(500);
-			}
-			set_led(LED1, 1);
-			turn_left();
-
-			while (abs(right_motor_get_pos())<1000){
-				left_motor_set_speed(500);
-				right_motor_set_speed(500);
-			}
-			set_led(LED3, 1);
-			turn_right();
-
-
-			while (abs(right_motor_get_pos())<1000){
-				left_motor_set_speed(500);
-				right_motor_set_speed(500);
-			}
-			set_led(LED5, 1);
-			right_step();
-
-			while (abs(right_motor_get_pos())<1000){
-				left_motor_set_speed(500);
-				right_motor_set_speed(500);
-			}
-			set_led(LED7, 1);
+		if((get_calibrated_prox(IR8)<30 || get_calibrated_prox(IR1)<30) &&
+			(get_calibrated_prox(IR3)-get_calibrated_prox(IR6))>40) {
 			left_step();
 
-			set_body_led(0);
-			set_front_led(1);
-    	}
-*/
-    	//	straight_track();
-
-    	}
-    }
-
-
-
-
-/*
-
+		} else if((get_calibrated_prox(IR8)<30 || get_calibrated_prox(IR1)<30) &&
+				(get_calibrated_prox(IR6)-get_calibrated_prox(IR3))>40) {
+				right_step();
+				}
+			}
+			else {
+				straight_track();
+		    }
+		set_led(LED1,0);
+		set_led(LED3,0);
+		set_led(LED5,0);
+		set_led(LED7,0);
 		set_body_led(0);
 
-		set_led(LED1, 0);
-		set_led(LED2, 0);
-		set_led(LED3, 0);
-		set_led(LED4, 0);
-		set_led(LED5, 0);
-		set_led(LED6, 0);
-		set_led(LED7, 0);
-		set_led(LED8, 0);
+    	//detection();
+    	//turn();
+    	 */
+	}
 
-		for(int i=0; i<9; ++i){
-			set_led(LED i, 1);
-		}
 
-		for(int i=0; i<9; ++i){
-			char* led = "LED%d>n";
-			set_led(led, 0);
-		}
-		*/
 
 #ifdef SEND_FROM_MIC
         //waits until a result must be sent to the computer
@@ -339,7 +322,7 @@ int main(void)
         }
 #endif  /* SEND_FROM_MIC */
     }
-
+}
 
 #define STACK_CHK_GUARD 0xe2dee396
 uintptr_t __stack_chk_guard = STACK_CHK_GUARD;
@@ -348,3 +331,5 @@ void __stack_chk_fail(void)
 {
     chSysHalt("Stack smashing detected");
 }
+
+

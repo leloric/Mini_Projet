@@ -7,7 +7,7 @@
 
 void turn(void);
 void victim_found(void);
-void turn_angle(int16_t angle);
+void rotate(int16_t angle);
 void straight_track(void);
 void turn_left(void);
 void turn_right(void);

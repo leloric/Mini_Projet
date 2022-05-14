@@ -18,19 +18,20 @@ typedef enum {
 } BUFFER_NAME_t;
 
 
+
 void processAudioData(int16_t *data, uint16_t num_samples);
+int16_t triangulation(int16_t frequence_left, int16_t frequence_right);
 
 /*
 *	put the invoking thread into sleep until it can process the audio datas
 */
-void wait_send_to_computer(int16_t max_norm_index_left, int16_t max_norm_index_right);
+void wait_send_to_computer(void);
 
 /*
 *	Returns the pointer to the BUFFER_NAME_t buffer asked
 */
 float* get_audio_buffer_ptr(BUFFER_NAME_t name);
 
-void rotation (float angle);
-void find_angle(int16_t max_norm_index_left, int16_t max_norm_index_right, float max_norm_front, float max_norm_back);
+_Bool get_rescue(void);
 
 #endif /* AUDIO_PROCESSING_H */

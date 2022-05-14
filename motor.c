@@ -6,6 +6,7 @@
 #include <motors.h>
 #include <audio_processing.h>
 #include <sensors/proximity.h>
+#include <audio/play_melody.h>
 
 #define TIMER_CLOCK         84000000
 #define TIMER_FREQ          100000 // [Hz]
@@ -51,7 +52,9 @@ static int16_t position_to_reach_right = 0;	    // in [step]
 static int16_t position_to_reach_left = 0;	    // in [step]
 static uint8_t position_right_reached = 0;
 static uint8_t position_left_reached = 0;
+
 static uint8_t state_motor = ARRET;
+
 
 
 //tables containing the steps for the motors
@@ -62,124 +65,120 @@ static const uint8_t step_table[NSTEP_ONE_EL_TURN][NB_OF_PHASES] = {
     {0, 1, 0, 1},
     {1, 0, 0, 1},
 };
-/*
-void turn (void){
-	if (state_motor==1){
-		set_body_led(1);
-		left_motor_set_speed(-400);
-		right_motor_set_speed(400);
+
+void straight_track(void){
+	if (get_rescue()==1){
+		left_motor_set_speed(500);
+		right_motor_set_speed(500);
 	}
 }
-*/
-void turn(void){
-	set_body_led(1);
-	left_motor_set_speed(-500);
-	right_motor_set_speed(500);
+
+
+void turn (void){
+	if (get_rescue()==1){
+		set_body_led(1);
+		left_motor_set_speed(-500);
+		right_motor_set_speed(500);
+	}
 }
 
 void victim_found(void){
-	set_front_led(0);
-	turn();
-	//music
-	int j=0;
-	while(j<7) {
-		set_led(LED1, 1);
-		chThdSleepMilliseconds(300);
-		set_led(LED3, 1);
-		chThdSleepMilliseconds(300);
-		set_led(LED5, 1);
-		chThdSleepMilliseconds(300);
-		set_led(LED7, 1);
-		chThdSleepMilliseconds(300);
-		set_led(LED1, 0);
-		chThdSleepMilliseconds(300);
-		set_led(LED3, 0);
-		chThdSleepMilliseconds(300);
-		set_led(LED5, 0);
-		chThdSleepMilliseconds(300);
-		set_led(LED7, 0);
-		++j;
+	if (get_rescue()==1){
+		set_front_led(0);
+		turn();
+		playMelody(IMPOSSIBLE_MISSION, ML_SIMPLE_PLAY, NULL);
+		int j=0;
+		while(j<7) {
+			set_led(LED1, 1);
+			chThdSleepMilliseconds(300);
+			set_led(LED3, 1);
+			chThdSleepMilliseconds(300);
+			set_led(LED5, 1);
+			chThdSleepMilliseconds(300);
+			set_led(LED7, 1);
+			chThdSleepMilliseconds(300);
+			set_led(LED1, 0);
+			chThdSleepMilliseconds(300);
+			set_led(LED3, 0);
+			chThdSleepMilliseconds(300);
+			set_led(LED5, 0);
+			chThdSleepMilliseconds(300);
+			set_led(LED7, 0);
+			++j;
+		}
+		set_body_led(0);
+		set_front_led(1);
+		left_motor_set_speed(0);
+		right_motor_set_speed(0);
 	}
-	set_body_led(0);
-	set_front_led(1);
 }
 
-void straight_track(void){
-	left_motor_set_speed(500);
-	right_motor_set_speed(500);
-}
-
-void turn_angle(int16_t angle){
-	int16_t nb_step = abs(CONVERSION_STEP*angle);
-	if (state_motor == ON){
-		right_motor_set_pos(RESET_VALUE);
-		if (angle < 0){
-			//if negative angle
-			set_led(LED7, ON);
-			while(abs(right_motor_get_pos()) < nb_step){
-				left_motor_set_speed(NEGATIVE_SPEED);
-				right_motor_set_speed(POSITIVE_SPEED);
+void rotate(int16_t angle){
+	if (get_rescue()==1){
+		if (abs(angle <=1)) {
+			left_motor_set_speed(500);
+			right_motor_set_speed(500);
+		} else {
+			if (angle < 0){
+				left_motor_set_speed(-300);
+				right_motor_set_speed(300);
+			} else {
+				left_motor_set_speed(300);
+				right_motor_set_speed(-300);
 			}
-			set_led(LED7,OFF);
 		}
-		else {
-			//if positive angle
-			set_led(LED3, ON);
-			while(abs(right_motor_get_pos()) < nb_step){
-				right_motor_set_speed(NEGATIVE_SPEED);
-				left_motor_set_speed(POSITIVE_SPEED);
-			}
-			set_led(LED3,OFF);
-		}
-		go_forward_step();
 	}
 }
 
 void turn_left(void){
-	right_motor_set_pos(0);
-	while (abs(right_motor_get_pos())<325){
-		left_motor_set_speed(-500);
-		right_motor_set_speed(500);
+	if (get_rescue()==1){
+		right_motor_set_pos(0);
+		while (abs(right_motor_get_pos())<325){
+			left_motor_set_speed(-500);
+			right_motor_set_speed(500);
+		}
+		while (get_calibrated_prox(IR3)>110){
+			left_motor_set_speed(500);
+			right_motor_set_speed(500);
+		}
+		right_motor_set_pos(0);
+		while (abs(right_motor_get_pos())<150){
+			left_motor_set_speed(500);
+			right_motor_set_speed(500);
+		}
+		right_motor_set_pos(0);
 	}
-	while (get_calibrated_prox(IR3)>110){
-		left_motor_set_speed(500);
-		right_motor_set_speed(500);
-	}
-	right_motor_set_pos(0);
-	while (abs(right_motor_get_pos())<150){
-		left_motor_set_speed(500);
-		right_motor_set_speed(500);
-	}
-	right_motor_set_pos(0);
 }
 
 void turn_right(void){
-	left_motor_set_pos(0);
-	while (abs(left_motor_get_pos())<325){
-		left_motor_set_speed(500);
-		right_motor_set_speed(-500);
+	if (get_rescue()==1){
+		left_motor_set_pos(0);
+		while (abs(left_motor_get_pos())<325){
+			left_motor_set_speed(500);
+			right_motor_set_speed(-500);
+		}
+		while (get_calibrated_prox(IR6)>110){
+			left_motor_set_speed(500);
+			right_motor_set_speed(500);
+		}
+		left_motor_set_pos(0);
+		while (abs(left_motor_get_pos())<150){
+			left_motor_set_speed(500);
+			right_motor_set_speed(500);
+		}
+		right_motor_set_pos(0);
 	}
-	while (get_calibrated_prox(IR6)>110){
-		left_motor_set_speed(500);
-		right_motor_set_speed(500);
-	}
-	left_motor_set_pos(0);
-	while (abs(left_motor_get_pos())<150){
-		left_motor_set_speed(500);
-		right_motor_set_speed(500);
-	}
-	right_motor_set_pos(0);
 }
 
 void left_step(void){
-
+	if (get_rescue()==1){
 		left_motor_set_pos(0);
 		while (abs(left_motor_get_pos())<200){
 			left_motor_set_speed(200);
 			right_motor_set_speed(500);
 		}
 		left_motor_set_pos(0);
-		while (abs(left_motor_get_pos())<200){
+		while (abs(left_motor_get_pos())<500){
 			left_motor_set_speed(500);
 			right_motor_set_speed(200);
 		}
@@ -187,24 +186,26 @@ void left_step(void){
 		left_motor_set_speed(500);
 		right_motor_set_speed(500);
 	}
+}
 
 
 void right_step(void){
-
-		right_motor_set_pos(TARE);
+	if (get_rescue()==1){
+		right_motor_set_pos(0);
 		while (abs(right_motor_get_pos())<200){
 			left_motor_set_speed(500);
 			right_motor_set_speed(200);
 		}
-		right_motor_set_pos(TARE);
-		while (abs(right_motor_get_pos())<150){
+		right_motor_set_pos(0);
+		while (abs(right_motor_get_pos())<500){
 			left_motor_set_speed(200);
 			right_motor_set_speed(500);
 		}
-		rigth_motor_set_pos(TARE);
+		rigth_motor_set_pos(0);
 		left_motor_set_speed(500);
 		right_motor_set_speed(500);
 	}
+}
 
 
 

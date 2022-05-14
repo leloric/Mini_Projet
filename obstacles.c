@@ -31,10 +31,8 @@
 void detection(void) {
 	//Obstacle (front) and no obstacles on the left+right
 	if((get_calibrated_prox(IR8)>110 || get_calibrated_prox(IR1)>110) &&
-			get_calibrated_prox(IR3)<110 && get_calibrated_prox(IR6)<110){
-		set_led(LED1, 1);
-
-		set_led(LED5, 1);
+		get_calibrated_prox(IR3)<110 && get_calibrated_prox(IR6)<110){
+		turn_right();
 	}
 	//Obstacle (front+right) and no obstacle on the left
 	else if((get_calibrated_prox(IR8)>200 || get_calibrated_prox(IR1)>200) &&
