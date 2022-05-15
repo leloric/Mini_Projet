@@ -69,6 +69,7 @@ static float micBack_output[FFT_SIZE];
 #define STEP		500
 #define ZERO		0
 #define STOP		0
+#define INTENSITE_SUFFISANTE	170000
 
 //static uint8_t state_motor=0;
 static _Bool rescue = 0;
@@ -121,6 +122,12 @@ void sound_remote(float* data_left, float* data_right){
 		left_motor_set_speed(0);
 		right_motor_set_speed(0);
 		angle_found = 0;
+	} else if (max_norm_right > INTENSITE_SUFFISANTE && max_norm_left > INTENSITE_SUFFISANTE){
+		left_motor_set_speed(0);
+		right_motor_set_speed(0);
+		angle_found = 0;
+		victim_found();
+
 	} else {
 		rescue = ON;
 	}
