@@ -33,5 +33,7 @@ void wait_send_to_computer(void);
 float* get_audio_buffer_ptr(BUFFER_NAME_t name);
 
 _Bool get_rescue(void);
+_Bool get_angle_found(void);
+void set_angle_found(_Bool state);
 
 #endif /* AUDIO_PROCESSING_H */

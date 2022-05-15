@@ -69,7 +69,6 @@ static float micBack_output[FFT_SIZE];
 #define STEP		500
 #define ZERO		0
 #define STOP		0
-#define INTENSITE_SUFFISANTE	170000
 
 //static uint8_t state_motor=0;
 static _Bool rescue = 0;
@@ -79,26 +78,6 @@ static _Bool angle_found = 0;
 *	and to execute a motor command depending on it
 */
 
-
-void rotate(int16_t angle){
-	if (rescue) {
-	if (abs(angle) > ANGLE_MIN && angle_found==0){
-		set_body_led(1);
-		if (angle<0){
-		left_motor_set_speed(-300);
-		right_motor_set_speed(300);
-		} else {
-			left_motor_set_speed(300);
-			right_motor_set_speed(-300);
-		}
-	} else {
-		set_front_led(1);
-		angle_found = 1;
-		left_motor_set_speed(HIGH_SPEED);
-		right_motor_set_speed(HIGH_SPEED);
-	}
-}
-}
 
 void sound_remote(float* data_left, float* data_right){
 	float max_norm_left = MIN_VALUE_THRESHOLD;
@@ -119,15 +98,11 @@ void sound_remote(float* data_left, float* data_right){
 	//enabling of the rescue
 	if (get_selector() < MOITIE_SELECTOR){
 		rescue = OFF;
+		set_front_led(0);
+		set_body_led(0);
 		left_motor_set_speed(0);
 		right_motor_set_speed(0);
 		angle_found = 0;
-	} else if (max_norm_right > INTENSITE_SUFFISANTE && max_norm_left > INTENSITE_SUFFISANTE){
-		left_motor_set_speed(0);
-		right_motor_set_speed(0);
-		angle_found = 0;
-		victim_found();
-
 	} else {
 		rescue = ON;
 	}
@@ -137,21 +112,21 @@ void sound_remote(float* data_left, float* data_right){
 	set_led(LED3,OFF);
 	set_led(LED5,OFF);
 	set_led(LED7,OFF);
-	set_body_led(0);
-	set_front_led(0);
+	//set_body_led(0);
+
 
 		//source 1 a 450hz
-		if(max_norm_index_left >= FREQ_SOURCE_1_L && max_norm_index_left <= FREQ_SOURCE_1_H){
-				rotate(angle);
-
+		if(max_norm_index_left >= FREQ_SOURCE_1_L && max_norm_index_left <= FREQ_SOURCE_1_H && rescue){
+			rotate(angle);
+			//turn_angle(angle);
 		}
 		//source 2 a 270hz
-		if(max_norm_index_left >= FREQ_SOURCE_2_L && max_norm_index_left <= FREQ_SOURCE_2_H){
+		if(max_norm_index_left >= FREQ_SOURCE_2_L && max_norm_index_left <= FREQ_SOURCE_2_H && rescue){
 
 				//rotate(angle);
 		}
 		//source 3 a 350hz
-		if(max_norm_index_left >= FREQ_SOURCE_3_L && max_norm_index_left <= FREQ_SOURCE_3_H){
+		if(max_norm_index_left >= FREQ_SOURCE_3_L && max_norm_index_left <= FREQ_SOURCE_3_H && rescue){
 				//rotate(angle);
 
 
@@ -286,4 +261,12 @@ float* get_audio_buffer_ptr(BUFFER_NAME_t name){
 
 _Bool get_rescue(void){
 	return rescue;
+}
+
+_Bool get_angle_found(void){
+	return angle_found;
+}
+
+void set_angle_found(_Bool state) {
+	angle_found = state;
 }
