@@ -22,18 +22,22 @@ static float micRight_cmplx_input[2 * FFT_SIZE];
 //Arrays containing the computed magnitude of the complex numbers
 static float micLeft_output[FFT_SIZE];
 static float micRight_output[FFT_SIZE];
+
+
 #define MIN_VALUE_THRESHOLD 10000
 #define MIN_FREQ 			25 //we don’t analyze before this index to not use resources for nothing
 //triangulation is better with small frequencies
 #define FREQ_TRIANG_L		28 //438 Hz
 #define FREQ_TRIANG_H		29 //453 Hz
 //high frequencies are needed so that the celebration and the start are not activated while the robot is running
-#define FREQ_CELEBRATE_L	67 //1047 Hz
-#define FREQ_CELEBRATE_H	68 //1062 Hz
-#define FREQ_START_L 		80 //1250 Hz
-#define FREQ_START_H 		81 //1265 Hz
-#define MAX_FREQ 			100//we don’t analyze after this index to not use resources for nothing
-#define CONVERSION_STEP			7.222f
+#define FREQ_SOURCE_1_L			28 //110 Hz
+#define FREQ_SOURCE_1_H			29 //125 Hz
+#define FREQ_SOURCE_2_L 		17 //266 Hz
+#define FREQ_SOURCE_2_H 		18 //281 Hz
+#define FREQ_SOURCE_3_L 		22 //344 Hz
+#define FREQ_SOURCE_3_H 		23 //359 Hz
+#define MAX_FREQ 				100//we don’t analyze after this index to not use resources for nothing
+//#define CONV_DEG_TO_STEP		7.222f
 
 //2 times FFT_SIZE because these arrays contain complex numbers (real + imaginary)
 static float micLeft_cmplx_input[2 * FFT_SIZE];
@@ -48,34 +52,52 @@ static float micBack_output[FFT_SIZE];
 
 #define MIN_VALUE_THRESHOLD	10000 
 
-//#define MIN_FREQ		10	//we don't analyze before this index to not use resources for nothing
-#define FREQ_FORWARD	16	//250Hz
-#define FREQ_LEFT		19	//296Hz
-#define FREQ_RIGHT		23	//359HZ
-#define FREQ_BACKWARD	26	//406Hz
-//#define MAX_FREQ		30	//we don't analyze after this index to not use resources for nothing
 
-#define FREQ_FORWARD_L		(FREQ_FORWARD-1)
-#define FREQ_FORWARD_H		(FREQ_FORWARD+1)
-#define FREQ_LEFT_L			(FREQ_LEFT-1)
-#define FREQ_LEFT_H			(FREQ_LEFT+1)
-#define FREQ_RIGHT_L		(FREQ_RIGHT-1)
-#define FREQ_RIGHT_H		(FREQ_RIGHT+1)
-#define FREQ_BACKWARD_L		(FREQ_BACKWARD-1)
-#define FREQ_BACKWARD_H		(FREQ_BACKWARD+1)
 
-#define ON					1
-#define RESET_VALUE			0
+
+#define ON					 1
+#define OFF					 0
+#define RESET_VALUE			 0
 #define START_INDEX			-1
-#define MAX_ANGLE			46
+#define MAX_ANGLE			 46
 #define MIN_ANGLE			-46
+#define MOITIE_SELECTOR		 8
+#define ANGLE_MIN			 2
+#define LOW_SPEED		200
+#define MIDDLE_SPEED	300
+#define HIGH_SPEED	500
+#define STEP		500
+#define ZERO		0
+#define STOP		0
 
 //static uint8_t state_motor=0;
-static _Bool rescue=0;
+static _Bool rescue = 0;
+static _Bool angle_found = 0;
 /*
 *	Simple function used to detect the highest value in a buffer
 *	and to execute a motor command depending on it
 */
+
+
+void rotate(int16_t angle){
+	if (rescue) {
+	if (abs(angle) > ANGLE_MIN && angle_found==0){
+		set_body_led(1);
+		if (angle<0){
+		left_motor_set_speed(-300);
+		right_motor_set_speed(300);
+		} else {
+			left_motor_set_speed(300);
+			right_motor_set_speed(-300);
+		}
+	} else {
+		set_front_led(1);
+		angle_found = 1;
+		left_motor_set_speed(HIGH_SPEED);
+		right_motor_set_speed(HIGH_SPEED);
+	}
+}
+}
 
 void sound_remote(float* data_left, float* data_right){
 	float max_norm_left = MIN_VALUE_THRESHOLD;
@@ -94,41 +116,45 @@ void sound_remote(float* data_left, float* data_right){
 		}
 	}
 	//enabling of the rescue
-	if (get_selector()<8){
-		rescue=0;
+	if (get_selector() < MOITIE_SELECTOR){
+		rescue = OFF;
+		left_motor_set_speed(0);
+		right_motor_set_speed(0);
+		angle_found = 0;
 	} else {
-		rescue=1;
+		rescue = ON;
 	}
 	int16_t angle = triangulation(max_norm_index_left, max_norm_index_right);
-	set_led(LED1,0);
-	set_led(LED3,0);
-	set_led(LED7,0);
-	set_led(LED5,0);
 
-	//source 1 a 1250hz
-	if(max_norm_index_left >= FREQ_START_L && max_norm_index_left <= FREQ_START_H && rescue){
-		if (angle>MIN_ANGLE && angle<MAX_ANGLE) {
-			//rotate(angle);
+	set_led(LED1,OFF);
+	set_led(LED3,OFF);
+	set_led(LED5,OFF);
+	set_led(LED7,OFF);
+	set_body_led(0);
+	set_front_led(0);
+
+		//source 1 a 450hz
+		if(max_norm_index_left >= FREQ_SOURCE_1_L && max_norm_index_left <= FREQ_SOURCE_1_H){
+				rotate(angle);
+
 		}
-	}
-	//source 2 a 1050hz
-	if(max_norm_index_left >= FREQ_CELEBRATE_L && max_norm_index_left <= FREQ_CELEBRATE_H && rescue){
-		if (angle>MIN_ANGLE && angle<MAX_ANGLE) {
-			//rotate(angle);
+		//source 2 a 270hz
+		if(max_norm_index_left >= FREQ_SOURCE_2_L && max_norm_index_left <= FREQ_SOURCE_2_H){
+
+				//rotate(angle);
 		}
-	}
-	//source 3 a 450hz
-	if(max_norm_index_left >= FREQ_TRIANG_L && max_norm_index_left <= FREQ_TRIANG_H && rescue){
-		if (angle>MIN_ANGLE && angle<MAX_ANGLE) {
-			//rotate(angle);
+		//source 3 a 350hz
+		if(max_norm_index_left >= FREQ_SOURCE_3_L && max_norm_index_left <= FREQ_SOURCE_3_H){
+				//rotate(angle);
+
+
 		}
-	}
 }
 
-int16_t triangulation(int16_t frequence_left, int16_t frequence_right){
-	float phase_left = atan2f(micLeft_cmplx_input[2*frequence_left+1], micLeft_cmplx_input[2*frequence_left]);
-	float phase_right = atan2f(micRight_cmplx_input[2*frequence_right+1], micRight_cmplx_input[2*frequence_right]);
-	int16_t dephasage=(phase_right-phase_left)*180/PI; //compute the phase difference, which gives the angle
+int16_t triangulation(int16_t frequ_left, int16_t frequ_right){
+	float phase_left = atan2f(micLeft_cmplx_input[2*frequ_left+1], micLeft_cmplx_input[2*frequ_left]);
+	float phase_right = atan2f(micRight_cmplx_input[2*frequ_right+1], micRight_cmplx_input[2*frequ_right]);
+	int16_t dephasage=(phase_right-phase_left)*180/PI; //compute the phase difference, which gives the angle in [deg]
 	return dephasage;
 }
 

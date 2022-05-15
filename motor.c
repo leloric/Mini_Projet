@@ -42,6 +42,18 @@
 #define ARRET			    0
 #define TARE			    0
 
+#define ANGLE_MIN		1 // [deg]
+#define PETITE_ATTENTE		300
+#define ON		1
+#define OFF		0
+#define LOW_SPEED		200
+#define MIDDLE_SPEED	300
+#define HIGH_SPEED		500
+#define STEP		500
+#define ZERO		0
+#define BOUCLE		7
+#define STOP		0
+
 
 //some static global variables
 static int16_t right_speed = 0; 			    // in [step/s]
@@ -67,143 +79,140 @@ static const uint8_t step_table[NSTEP_ONE_EL_TURN][NB_OF_PHASES] = {
 };
 
 void straight_track(void){
-	if (get_rescue()==1){
-		left_motor_set_speed(500);
-		right_motor_set_speed(500);
+	if (get_rescue()){
+		left_motor_set_speed(HIGH_SPEED);
+		right_motor_set_speed(HIGH_SPEED);
 	}
 }
 
-
 void turn (void){
-	if (get_rescue()==1){
-		set_body_led(1);
-		left_motor_set_speed(-500);
-		right_motor_set_speed(500);
+	if (get_rescue()){
+		set_body_led(ON);
+		left_motor_set_speed(-HIGH_SPEED);
+		right_motor_set_speed(HIGH_SPEED);
 	}
 }
 
 void victim_found(void){
-	if (get_rescue()==1){
-		set_front_led(0);
+	if (get_rescue()){
+		set_front_led(OFF);
 		turn();
 		playMelody(IMPOSSIBLE_MISSION, ML_SIMPLE_PLAY, NULL);
 		int j=0;
-		while(j<7) {
-			set_led(LED1, 1);
-			chThdSleepMilliseconds(300);
-			set_led(LED3, 1);
-			chThdSleepMilliseconds(300);
-			set_led(LED5, 1);
-			chThdSleepMilliseconds(300);
-			set_led(LED7, 1);
-			chThdSleepMilliseconds(300);
-			set_led(LED1, 0);
-			chThdSleepMilliseconds(300);
-			set_led(LED3, 0);
-			chThdSleepMilliseconds(300);
-			set_led(LED5, 0);
-			chThdSleepMilliseconds(300);
-			set_led(LED7, 0);
+		while(j < BOUCLE) {
+			set_led(LED1, ON);
+			chThdSleepMilliseconds(PETITE_ATTENTE);
+			set_led(LED3, ON);
+			chThdSleepMilliseconds(PETITE_ATTENTE);
+			set_led(LED5, ON);
+			chThdSleepMilliseconds(PETITE_ATTENTE);
+			set_led(LED7, ON);
+			chThdSleepMilliseconds(PETITE_ATTENTE);
+			set_led(LED1, OFF);
+			chThdSleepMilliseconds(PETITE_ATTENTE);
+			set_led(LED3, OFF);
+			chThdSleepMilliseconds(PETITE_ATTENTE);
+			set_led(LED5, OFF);
+			chThdSleepMilliseconds(PETITE_ATTENTE);
+			set_led(LED7, OFF);
 			++j;
 		}
-		set_body_led(0);
-		set_front_led(1);
-		left_motor_set_speed(0);
-		right_motor_set_speed(0);
+		set_body_led(OFF);
+		set_front_led(ON);
+		left_motor_set_speed(STOP);
+		right_motor_set_speed(STOP);
 	}
 }
 
 void rotate(int16_t angle){
-	if (get_rescue()==1){
-		if (abs(angle <=1)) {
-			left_motor_set_speed(500);
-			right_motor_set_speed(500);
-		} else {
+	if (get_rescue() && abs(angle) > ANGLE_MIN){
 			if (angle < 0){
-				left_motor_set_speed(-300);
-				right_motor_set_speed(300);
+				left_motor_set_speed(-MIDDLE_SPEED);
+				right_motor_set_speed(MIDDLE_SPEED);
 			} else {
-				left_motor_set_speed(300);
-				right_motor_set_speed(-300);
+				left_motor_set_speed(MIDDLE_SPEED);
+				right_motor_set_speed(-MIDDLE_SPEED);
 			}
 		}
-	}
+	left_motor_set_speed(HIGH_SPEED);
+	right_motor_set_speed(HIGH_SPEED);
 }
 
+
 void turn_left(void){
-	if (get_rescue()==1){
-		right_motor_set_pos(0);
-		while (abs(right_motor_get_pos())<325){
-			left_motor_set_speed(-500);
-			right_motor_set_speed(500);
+	if (get_rescue()){
+		right_motor_set_pos(ZERO);
+		while (abs(right_motor_get_pos()) < 325){
+			left_motor_set_speed(-HIGH_SPEED);
+			right_motor_set_speed(HIGH_SPEED);
 		}
-		while (get_calibrated_prox(IR3)>110){
-			left_motor_set_speed(500);
-			right_motor_set_speed(500);
+		while (get_calibrated_prox(IR3) > 110){
+			left_motor_set_speed(HIGH_SPEED);
+			right_motor_set_speed(HIGH_SPEED);
 		}
-		right_motor_set_pos(0);
-		while (abs(right_motor_get_pos())<150){
-			left_motor_set_speed(500);
-			right_motor_set_speed(500);
+		right_motor_set_pos(ZERO);
+		while (abs(right_motor_get_pos()) < 150){
+			left_motor_set_speed(HIGH_SPEED);
+			right_motor_set_speed(HIGH_SPEED);
 		}
-		right_motor_set_pos(0);
+		right_motor_set_pos(ZERO);
 	}
 }
 
 void turn_right(void){
-	if (get_rescue()==1){
-		left_motor_set_pos(0);
-		while (abs(left_motor_get_pos())<325){
-			left_motor_set_speed(500);
-			right_motor_set_speed(-500);
+	if (get_rescue()){
+		left_motor_set_pos(ZERO);
+		while (abs(left_motor_get_pos()) < 325){
+			left_motor_set_speed(HIGH_SPEED);
+			right_motor_set_speed(-HIGH_SPEED);
 		}
-		while (get_calibrated_prox(IR6)>110){
-			left_motor_set_speed(500);
-			right_motor_set_speed(500);
+		while (get_calibrated_prox(IR6) > 110){
+			left_motor_set_speed(HIGH_SPEED);
+			right_motor_set_speed(HIGH_SPEED);
 		}
-		left_motor_set_pos(0);
-		while (abs(left_motor_get_pos())<150){
-			left_motor_set_speed(500);
-			right_motor_set_speed(500);
+		left_motor_set_pos(ZERO);
+		while (abs(left_motor_get_pos()) < 150){
+			left_motor_set_speed(HIGH_SPEED);
+			right_motor_set_speed(HIGH_SPEED);
 		}
-		right_motor_set_pos(0);
+		right_motor_set_pos(ZERO);
 	}
 }
 
 void left_step(void){
-	if (get_rescue()==1){
-		left_motor_set_pos(0);
-		while (abs(left_motor_get_pos())<200){
-			left_motor_set_speed(200);
-			right_motor_set_speed(500);
+	if (get_rescue()){
+		left_motor_set_pos(ZERO);
+		while (abs(left_motor_get_pos()) < STEP){
+			left_motor_set_speed(LOW_SPEED);
+			right_motor_set_speed(HIGH_SPEED);
 		}
-		left_motor_set_pos(0);
-		while (abs(left_motor_get_pos())<500){
-			left_motor_set_speed(500);
-			right_motor_set_speed(200);
+		left_motor_set_pos(ZERO);
+		while (abs(left_motor_get_pos()) < STEP){
+			left_motor_set_speed(HIGH_SPEED);
+			right_motor_set_speed(LOW_SPEED);
 		}
-		left_motor_set_pos(0);
-		left_motor_set_speed(500);
-		right_motor_set_speed(500);
+		left_motor_set_pos(ZERO);
+		left_motor_set_speed(HIGH_SPEED);
+		right_motor_set_speed(HIGH_SPEED);
 	}
 }
 
 
 void right_step(void){
-	if (get_rescue()==1){
-		right_motor_set_pos(0);
-		while (abs(right_motor_get_pos())<200){
-			left_motor_set_speed(500);
-			right_motor_set_speed(200);
+	if (get_rescue()){
+		right_motor_set_pos(ZERO);
+		while (abs(right_motor_get_pos()) < 200){
+			left_motor_set_speed(HIGH_SPEED);
+			right_motor_set_speed(LOW_SPEED);
 		}
-		right_motor_set_pos(0);
-		while (abs(right_motor_get_pos())<500){
-			left_motor_set_speed(200);
-			right_motor_set_speed(500);
+		right_motor_set_pos(ZERO);
+		while (abs(right_motor_get_pos()) < 500){
+			left_motor_set_speed(LOW_SPEED);
+			right_motor_set_speed(HIGH_SPEED);
 		}
-		rigth_motor_set_pos(0);
-		left_motor_set_speed(500);
-		right_motor_set_speed(500);
+		rigth_motor_set_pos(ZERO);
+		left_motor_set_speed(HIGH_SPEED);
+		right_motor_set_speed(HIGH_SPEED);
 	}
 }
 

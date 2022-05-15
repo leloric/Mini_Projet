@@ -34,6 +34,13 @@
 #define IR3						2
 #define IR6						5
 #define IR8						7
+#define ATTENTE		7000
+#define ON		1
+#define OFF		0
+#define LOW_SPEED	200
+#define HIGH_SPEED	500
+#define STEP		500
+#define ZERO		0
 
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
@@ -56,33 +63,33 @@ static void serial_start(void)
 
 void left_step(void){
 
-		left_motor_set_pos(0);
-		while (abs(left_motor_get_pos())<200){
-			left_motor_set_speed(200);
-			right_motor_set_speed(500);
+		left_motor_set_pos(ZERO);
+		while (abs(left_motor_get_pos()) < STEP){
+			left_motor_set_speed(LOW_SPEED);
+			right_motor_set_speed(HIGH_SPEED);
 		}
-		left_motor_set_pos(0);
-		while (abs(left_motor_get_pos())<500){
-			left_motor_set_speed(500);
-			right_motor_set_speed(200);
+		left_motor_set_pos(ZERO);
+		while (abs(left_motor_get_pos()) < STEP){
+			left_motor_set_speed(HIGH_SPEED);
+			right_motor_set_speed(LOW_SPEED);
 		}
-		left_motor_set_pos(0);
-		left_motor_set_speed(500);
-		right_motor_set_speed(500);
+		left_motor_set_pos(ZERO);
+		left_motor_set_speed(HIGH_SPEED);
+		right_motor_set_speed(HIGH_SPEED);
 	}
 
 void turn (void){
-	if (get_rescue()==1){
-		set_body_led(1);
-		left_motor_set_speed(-500);
-		right_motor_set_speed(500);
+	if (get_rescue()){
+		set_body_led(ON);
+		left_motor_set_speed(-HIGH_SPEED);
+		right_motor_set_speed(HIGH_SPEED);
 	}
 }
 
 
 void victim_found(void){
-	if (get_rescue()==1){
-		set_front_led(0);
+	if (get_rescue()){
+		set_front_led(OFF);
 		turn();
 		playMelody(IMPOSSIBLE_MISSION, ML_SIMPLE_PLAY, NULL);
 		int j=0;
@@ -123,7 +130,7 @@ void right_step(void){
 			left_motor_set_speed(200);
 			right_motor_set_speed(500);
 		}
-		right_motor_set_pos(0);
+		right_motor_set_pos(ZERO);
 		left_motor_set_speed(500);
 		right_motor_set_speed(500);
 	}
@@ -204,37 +211,9 @@ int main(void)
 
     /* Infinite loop. */
     while (1) {
-	if (get_rescue()==1){
-		set_front_led(1);
-		chThdSleepMilliseconds(7000);
-		/*
-	if(get_calibrated_prox(IR3)>70){set_led(LED3,1);}
-	if(get_calibrated_prox(IR6)>110){set_led(LED7,1);}
-	 if((get_calibrated_prox(IR8)<110 || get_calibrated_prox(IR1)<110) &&
-		get_calibrated_prox(IR6)>70 && get_calibrated_prox(IR3)>70) {
-		 set_body_led(1);
-
-		if((get_calibrated_prox(IR8)<30 || get_calibrated_prox(IR1)<30) &&
-			(get_calibrated_prox(IR3)-get_calibrated_prox(IR6))>40) {
-			left_step();
-
-		} else if((get_calibrated_prox(IR8)<30 || get_calibrated_prox(IR1)<30) &&
-				(get_calibrated_prox(IR6)-get_calibrated_prox(IR3))>40) {
-				right_step();
-				}
-			}
-			else {
-				straight_track();
-		    }
-		set_led(LED1,0);
-		set_led(LED3,0);
-		set_led(LED5,0);
-		set_led(LED7,0);
-		set_body_led(0);
-
-    	//detection();
-    	//turn();
-    	 */
+	if (get_rescue()){
+		//set_front_led(ON);
+		chThdSleepMilliseconds(ATTENTE);
 	}
 
 
@@ -273,39 +252,6 @@ int main(void)
             time_fft = GPTD12.tim->CNT;
             chSysUnlock();
 
-            /*
-            *   End of optimized FFT
-            */
-
-            /*
-            *   Non optimized FFT
-            */
-
-            // //need to convert the float buffer into complex_float struct array
-            // for(uint16_t i = 0 ; i < (2*FFT_SIZE) ; i+=2){
-            //     temp_tab[i/2].real = bufferCmplxInput[i];
-            //     temp_tab[i/2].imag = bufferCmplxInput[i+1];
-            // }
-
-            // chSysLock();
-            // //reset the timer counter
-            // GPTD12.tim->CNT = 0;
-
-            // //do a non optimized FFT
-            // doFFT_c(FFT_SIZE, temp_tab);
-
-            // time_fft = GPTD12.tim->CNT;
-            // chSysUnlock();
-            
-            // //reconverts the result into a float buffer
-            // for(uint16_t i = 0 ; i < (2*FFT_SIZE) ; i+=2){
-            //     bufferCmplxInput[i] = temp_tab[i/2].real;
-            //     bufferCmplxInput[i+1] = temp_tab[i/2].imag;
-            // }
-
-            /*
-            *   End of non optimized FFT
-            */
 
             chSysLock();
             //reset the timer counter
