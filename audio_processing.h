@@ -18,7 +18,6 @@ typedef enum {
 } BUFFER_NAME_t;
 
 
-
 void processAudioData(int16_t *data, uint16_t num_samples);
 int16_t triangulation(int16_t frequ_left, int16_t frequ_right);
 

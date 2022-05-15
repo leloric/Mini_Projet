@@ -22,7 +22,6 @@
 #include <audio/play_melody.h>
 #include <audio/audio_thread.h>
 
-
 messagebus_t bus;
 MUTEX_DECL(bus_lock);
 CONDVAR_DECL(bus_condvar);
@@ -55,6 +54,21 @@ static void timer12_start(void){
     gptStartContinuous(&GPTD12, 0xFFFF);
 }
 
+//Thread pour la détection d'obstacles
+static THD_WORKING_AREA(waThdObstacle, 128);
+static THD_FUNCTION(ThdObstacle, arg) {
+
+    chRegSetThreadName(__FUNCTION__);
+    (void)arg;
+
+    while(1){
+        detection();
+        chThdSleepMilliseconds(400);
+
+    }
+}
+
+
 int main(void)
 {
 
@@ -68,20 +82,13 @@ int main(void)
     usb_start();
     //starts timer 12
     timer12_start();
-    //inits the motors
+    //initiate the motors
     motors_init();
-	//inits the bus
+	//initiate the bus
 	messagebus_init(&bus, &bus_lock, &bus_condvar);
 	//starts proximity
 	proximity_start();
-
-	//calibration
-	//calibrate_ir();
-/*
-	//digital analogic converter
-	dac_start();
-*/
-	//start thread
+	//starts the melody thread
 	playMelodyStart();
 
     //send_tab is used to save the state of the buffer to send (double buffering)
@@ -89,15 +96,20 @@ int main(void)
     static float send_tab[FFT_SIZE];
 
     //starts the microphones processing thread.
-    //it calls the callback given in parameter when samples are ready
     mic_start(&processAudioData);
+
+    chThdSleepMilliseconds(2000);
+
+    chThdCreateStatic(waThdObstacle, sizeof(waThdObstacle), NORMALPRIO+2, ThdObstacle, NULL);
+
 
     /* Infinite loop. */
     while (1) {
 
-	if (get_rescue()){
-		detection();
+	if (get_rescue() && get_angle_found()){
+		straight_track();
 	}
+
 	//we copy the buffer to avoid conflicts
 	arm_copy_f32(get_audio_buffer_ptr(LEFT_OUTPUT), send_tab, FFT_SIZE);
 	arm_copy_f32(get_audio_buffer_ptr(RIGHT_OUTPUT), send_tab, FFT_SIZE);
